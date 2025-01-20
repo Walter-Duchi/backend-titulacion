@@ -1,12 +1,35 @@
-//Scaffold-DbContext "Server=.;Database=ProyectoDAWA;Trusted_Connection=True;TrustServerCertificate=True;" Microsoft.EntityFrameworkCore.SqlServer -OutputDir Models -Context ProyectoDAWAContext -Force
+using Microsoft.EntityFrameworkCore;
+using ProyectoDAWA.Repositories;
+using WebApp.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
 builder.Services.AddControllers();
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+
+// Registrar el DbContext con la cadena de conexión desde appsettings.json
+builder.Services.AddDbContext<ProyectoDAWAContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// Registrar los repositorios
+builder.Services.AddScoped<IPropuestaRepository, PropuestaRepository>();
+// Si tienes más repositorios, regístralos aquí de la misma forma
+
+// Registrar Swagger para la documentación de la API
 builder.Services.AddOpenApi();
+
+// Si usas autenticación, también debes configurarla aquí (opcional)
+builder.Services.AddAuthentication();
+
+// Configuración de CORS, si se requiere
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", builder =>
+    {
+        builder.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader();
+    });
+});
 
 var app = builder.Build();
 
@@ -17,8 +40,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
 app.UseAuthorization();
+app.UseCors("AllowAll"); // Habilitar CORS si se configuró
 
 app.MapControllers();
 
