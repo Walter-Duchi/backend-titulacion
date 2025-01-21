@@ -1,4 +1,6 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.FileProviders;
+using Microsoft.AspNetCore.Builder; // Necesario para UseStaticFiles
 using ProyectoDAWA.Repositories;
 using WebApp.Models;
 
@@ -64,6 +66,13 @@ app.UseAuthorization();
 
 // Habilitar CORS si está configurado
 app.UseCors("AllowAll");
+
+// Configuración para servir archivos estáticos desde la carpeta "UploadedFiles"
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(Path.Combine(Directory.GetCurrentDirectory(), "UploadedFiles")),
+    RequestPath = "/UploadedFiles" // URL de acceso a los archivos
+});
 
 // Mapeo de los controladores de la API
 app.MapControllers();

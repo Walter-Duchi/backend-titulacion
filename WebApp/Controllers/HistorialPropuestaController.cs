@@ -99,9 +99,58 @@ namespace WebApp.Controllers
             return NoContent();
         }
 
+        // POST: api/HistorialPropuesta/upload
+        [HttpPost("upload")]
+        public async Task<IActionResult> UploadFile(IFormFile file)
+        {
+            if (file == null || file.Length == 0)
+            {
+                return BadRequest("No file uploaded.");
+            }
+
+            // Verificar si el archivo es un PDF
+            if (file.ContentType != "application/pdf")
+            {
+                return BadRequest("Solo se permiten archivos PDF.");
+            }
+
+            // Define la carpeta donde se almacenarán los archivos (dentro del proyecto)
+            var folderPath = Path.Combine(Directory.GetCurrentDirectory(), "UploadedFiles");
+
+            // Crear la carpeta si no existe
+            if (!Directory.Exists(folderPath))
+            {
+                Directory.CreateDirectory(folderPath);
+            }
+
+            // Generar un nombre único para el archivo (para evitar sobreescribir archivos)
+            var fileName = $"{Guid.NewGuid()}_{file.FileName}";
+            var filePath = Path.Combine(folderPath, fileName);
+
+            // Guardar el archivo en la carpeta
+            using (var stream = new FileStream(filePath, FileMode.Create))
+            {
+                await file.CopyToAsync(stream);
+            }
+
+            // Crear el registro en la base de datos con la ruta del archivo
+            var fileRecord = new HistorialPropuesta
+            {
+                DireccionArchivo = filePath // Guardar la ruta del archivo
+            };
+
+            // Guardar en la base de datos
+            _context.HistorialPropuestas.Add(fileRecord);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { FilePath = filePath });
+        }
+
         private bool HistorialPropuestaExists(int id)
         {
             return _context.HistorialPropuestas.Any(e => e.Id == id);
         }
+
+
     }
 }
