@@ -6,6 +6,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
+// Agregar controladores para la API
 builder.Services.AddControllers();
 
 // Registrar el DbContext con la cadena de conexión desde appsettings.json
@@ -22,12 +23,19 @@ builder.Services.AddScoped<IMiembrosComisionRepository, MiembrosComisionReposito
 // Si tienes más repositorios, regístralos aquí de la misma forma
 
 // Registrar Swagger para la documentación de la API
-builder.Services.AddOpenApi();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
 
-// Si usas autenticación, también debes configurarla aquí (opcional)
-builder.Services.AddAuthentication();
+// Configuración de autenticación (si usas JWT o alguna otra forma de autenticación)
+builder.Services.AddAuthentication("Bearer")
+    .AddJwtBearer(options =>
+    {
+        options.Authority = "https://localhost:5001"; // Reemplaza con la URL de tu servicio de autenticación
+        options.Audience = "api1"; // Reemplaza con tu API
+        options.RequireHttpsMetadata = true;
+    });
 
-// Configuración de CORS, si se requiere
+// Configuración de CORS (Permitir todas las solicitudes desde cualquier origen)
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", builder =>
@@ -41,13 +49,24 @@ var app = builder.Build();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
+    // Habilitar Swagger solo en desarrollo
+    app.UseSwagger();
+    app.UseSwaggerUI();
 }
 
 app.UseHttpsRedirection();
-app.UseAuthorization();
-app.UseCors("AllowAll"); // Habilitar CORS si se configuró
 
+// Habilitar la autenticación
+app.UseAuthentication();
+
+// Habilitar la autorización
+app.UseAuthorization();
+
+// Habilitar CORS si está configurado
+app.UseCors("AllowAll");
+
+// Mapeo de los controladores de la API
 app.MapControllers();
 
+// Ejecutar la aplicación
 app.Run();
