@@ -2,14 +2,16 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using WebApp.Models;
 
 namespace WebApp.Controllers
 {
-    public class PeriodoController : Controller
+    [Route("api/[controller]")]
+    [ApiController]
+    public class PeriodoController : ControllerBase
     {
         private readonly ProyectoDAWAContext _context;
 
@@ -18,134 +20,83 @@ namespace WebApp.Controllers
             _context = context;
         }
 
-        // GET: Periodo
-        public async Task<IActionResult> Index()
+        // GET: api/Periodo
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<Periodo>>> GetPeriodos()
         {
-            return View(await _context.Periodos.ToListAsync());
+            return await _context.Periodos.ToListAsync();
         }
 
-        // GET: Periodo/Details/5
-        public async Task<IActionResult> Details(int? id)
+        // GET: api/Periodo/5
+        [HttpGet("{id}")]
+        public async Task<ActionResult<Periodo>> GetPeriodo(int id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var periodo = await _context.Periodos
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (periodo == null)
-            {
-                return NotFound();
-            }
-
-            return View(periodo);
-        }
-
-        // GET: Periodo/Create
-        public IActionResult Create()
-        {
-            return View();
-        }
-
-        // POST: Periodo/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,Estado,FechaInicio,FechaFin,CicloActual")] Periodo periodo)
-        {
-            if (ModelState.IsValid)
-            {
-                _context.Add(periodo);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
-            }
-            return View(periodo);
-        }
-
-        // GET: Periodo/Edit/5
-        public async Task<IActionResult> Edit(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
             var periodo = await _context.Periodos.FindAsync(id);
+
             if (periodo == null)
             {
                 return NotFound();
             }
-            return View(periodo);
+
+            return periodo;
         }
 
-        // POST: Periodo/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,Estado,FechaInicio,FechaFin,CicloActual")] Periodo periodo)
+        // PUT: api/Periodo/5
+        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        [HttpPut("{id}")]
+        public async Task<IActionResult> PutPeriodo(int id, Periodo periodo)
         {
             if (id != periodo.Id)
             {
-                return NotFound();
+                return BadRequest();
             }
 
-            if (ModelState.IsValid)
+            _context.Entry(periodo).State = EntityState.Modified;
+
+            try
             {
-                try
-                {
-                    _context.Update(periodo);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!PeriodoExists(periodo.Id))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                return RedirectToAction(nameof(Index));
+                await _context.SaveChangesAsync();
             }
-            return View(periodo);
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!PeriodoExists(id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+
+            return NoContent();
         }
 
-        // GET: Periodo/Delete/5
-        public async Task<IActionResult> Delete(int? id)
+        // POST: api/Periodo
+        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        [HttpPost]
+        public async Task<ActionResult<Periodo>> PostPeriodo(Periodo periodo)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
+            _context.Periodos.Add(periodo);
+            await _context.SaveChangesAsync();
 
-            var periodo = await _context.Periodos
-                .FirstOrDefaultAsync(m => m.Id == id);
+            return CreatedAtAction("GetPeriodo", new { id = periodo.Id }, periodo);
+        }
+
+        // DELETE: api/Periodo/5
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeletePeriodo(int id)
+        {
+            var periodo = await _context.Periodos.FindAsync(id);
             if (periodo == null)
             {
                 return NotFound();
             }
 
-            return View(periodo);
-        }
-
-        // POST: Periodo/Delete/5
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int id)
-        {
-            var periodo = await _context.Periodos.FindAsync(id);
-            if (periodo != null)
-            {
-                _context.Periodos.Remove(periodo);
-            }
-
+            _context.Periodos.Remove(periodo);
             await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
+
+            return NoContent();
         }
 
         private bool PeriodoExists(int id)

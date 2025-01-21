@@ -2,14 +2,16 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using WebApp.Models;
 
 namespace WebApp.Controllers
 {
-    public class EstudiantesPropuestaController : Controller
+    [Route("api/[controller]")]
+    [ApiController]
+    public class EstudiantesPropuestaController : ControllerBase
     {
         private readonly ProyectoDAWAContext _context;
 
@@ -18,147 +20,83 @@ namespace WebApp.Controllers
             _context = context;
         }
 
-        // GET: EstudiantesPropuesta
-        public async Task<IActionResult> Index()
+        // GET: api/EstudiantesPropuesta
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<EstudiantesPropuesta>>> GetEstudiantesPropuestas()
         {
-            var proyectoDAWAContext = _context.EstudiantesPropuestas.Include(e => e.Estudiante).Include(e => e.Propuesta);
-            return View(await proyectoDAWAContext.ToListAsync());
+            return await _context.EstudiantesPropuestas.ToListAsync();
         }
 
-        // GET: EstudiantesPropuesta/Details/5
-        public async Task<IActionResult> Details(int? id)
+        // GET: api/EstudiantesPropuesta/5
+        [HttpGet("{id}")]
+        public async Task<ActionResult<EstudiantesPropuesta>> GetEstudiantesPropuesta(int id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var estudiantesPropuesta = await _context.EstudiantesPropuestas
-                .Include(e => e.Estudiante)
-                .Include(e => e.Propuesta)
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (estudiantesPropuesta == null)
-            {
-                return NotFound();
-            }
-
-            return View(estudiantesPropuesta);
-        }
-
-        // GET: EstudiantesPropuesta/Create
-        public IActionResult Create()
-        {
-            ViewData["EstudianteId"] = new SelectList(_context.Usuarios, "Id", "Id");
-            ViewData["PropuestaId"] = new SelectList(_context.Propuestas, "Id", "Id");
-            return View();
-        }
-
-        // POST: EstudiantesPropuesta/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,EstudianteId,PropuestaId")] EstudiantesPropuesta estudiantesPropuesta)
-        {
-            if (ModelState.IsValid)
-            {
-                _context.Add(estudiantesPropuesta);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
-            }
-            ViewData["EstudianteId"] = new SelectList(_context.Usuarios, "Id", "Id", estudiantesPropuesta.EstudianteId);
-            ViewData["PropuestaId"] = new SelectList(_context.Propuestas, "Id", "Id", estudiantesPropuesta.PropuestaId);
-            return View(estudiantesPropuesta);
-        }
-
-        // GET: EstudiantesPropuesta/Edit/5
-        public async Task<IActionResult> Edit(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
             var estudiantesPropuesta = await _context.EstudiantesPropuestas.FindAsync(id);
+
             if (estudiantesPropuesta == null)
             {
                 return NotFound();
             }
-            ViewData["EstudianteId"] = new SelectList(_context.Usuarios, "Id", "Id", estudiantesPropuesta.EstudianteId);
-            ViewData["PropuestaId"] = new SelectList(_context.Propuestas, "Id", "Id", estudiantesPropuesta.PropuestaId);
-            return View(estudiantesPropuesta);
+
+            return estudiantesPropuesta;
         }
 
-        // POST: EstudiantesPropuesta/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,EstudianteId,PropuestaId")] EstudiantesPropuesta estudiantesPropuesta)
+        // PUT: api/EstudiantesPropuesta/5
+        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        [HttpPut("{id}")]
+        public async Task<IActionResult> PutEstudiantesPropuesta(int id, EstudiantesPropuesta estudiantesPropuesta)
         {
             if (id != estudiantesPropuesta.Id)
             {
-                return NotFound();
+                return BadRequest();
             }
 
-            if (ModelState.IsValid)
+            _context.Entry(estudiantesPropuesta).State = EntityState.Modified;
+
+            try
             {
-                try
-                {
-                    _context.Update(estudiantesPropuesta);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!EstudiantesPropuestaExists(estudiantesPropuesta.Id))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                return RedirectToAction(nameof(Index));
+                await _context.SaveChangesAsync();
             }
-            ViewData["EstudianteId"] = new SelectList(_context.Usuarios, "Id", "Id", estudiantesPropuesta.EstudianteId);
-            ViewData["PropuestaId"] = new SelectList(_context.Propuestas, "Id", "Id", estudiantesPropuesta.PropuestaId);
-            return View(estudiantesPropuesta);
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!EstudiantesPropuestaExists(id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+
+            return NoContent();
         }
 
-        // GET: EstudiantesPropuesta/Delete/5
-        public async Task<IActionResult> Delete(int? id)
+        // POST: api/EstudiantesPropuesta
+        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        [HttpPost]
+        public async Task<ActionResult<EstudiantesPropuesta>> PostEstudiantesPropuesta(EstudiantesPropuesta estudiantesPropuesta)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
+            _context.EstudiantesPropuestas.Add(estudiantesPropuesta);
+            await _context.SaveChangesAsync();
 
-            var estudiantesPropuesta = await _context.EstudiantesPropuestas
-                .Include(e => e.Estudiante)
-                .Include(e => e.Propuesta)
-                .FirstOrDefaultAsync(m => m.Id == id);
+            return CreatedAtAction("GetEstudiantesPropuesta", new { id = estudiantesPropuesta.Id }, estudiantesPropuesta);
+        }
+
+        // DELETE: api/EstudiantesPropuesta/5
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteEstudiantesPropuesta(int id)
+        {
+            var estudiantesPropuesta = await _context.EstudiantesPropuestas.FindAsync(id);
             if (estudiantesPropuesta == null)
             {
                 return NotFound();
             }
 
-            return View(estudiantesPropuesta);
-        }
-
-        // POST: EstudiantesPropuesta/Delete/5
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int id)
-        {
-            var estudiantesPropuesta = await _context.EstudiantesPropuestas.FindAsync(id);
-            if (estudiantesPropuesta != null)
-            {
-                _context.EstudiantesPropuestas.Remove(estudiantesPropuesta);
-            }
-
+            _context.EstudiantesPropuestas.Remove(estudiantesPropuesta);
             await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
+
+            return NoContent();
         }
 
         private bool EstudiantesPropuestaExists(int id)

@@ -2,14 +2,16 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using WebApp.Models;
 
 namespace WebApp.Controllers
 {
-    public class MiembrosComisionController : Controller
+    [Route("api/[controller]")]
+    [ApiController]
+    public class MiembrosComisionController : ControllerBase
     {
         private readonly ProyectoDAWAContext _context;
 
@@ -18,147 +20,83 @@ namespace WebApp.Controllers
             _context = context;
         }
 
-        // GET: MiembrosComision
-        public async Task<IActionResult> Index()
+        // GET: api/MiembrosComision
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<MiembrosComision>>> GetMiembrosComisions()
         {
-            var proyectoDAWAContext = _context.MiembrosComisions.Include(m => m.CoordinadorComision).Include(m => m.MiembrosComisionNavigation);
-            return View(await proyectoDAWAContext.ToListAsync());
+            return await _context.MiembrosComisions.ToListAsync();
         }
 
-        // GET: MiembrosComision/Details/5
-        public async Task<IActionResult> Details(int? id)
+        // GET: api/MiembrosComision/5
+        [HttpGet("{id}")]
+        public async Task<ActionResult<MiembrosComision>> GetMiembrosComision(int id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var miembrosComision = await _context.MiembrosComisions
-                .Include(m => m.CoordinadorComision)
-                .Include(m => m.MiembrosComisionNavigation)
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (miembrosComision == null)
-            {
-                return NotFound();
-            }
-
-            return View(miembrosComision);
-        }
-
-        // GET: MiembrosComision/Create
-        public IActionResult Create()
-        {
-            ViewData["CoordinadorComisionId"] = new SelectList(_context.MiembrosComisions, "Id", "Id");
-            ViewData["MiembrosComisionId"] = new SelectList(_context.Usuarios, "Id", "Id");
-            return View();
-        }
-
-        // POST: MiembrosComision/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,MiembrosComisionId,CoordinadorComisionId")] MiembrosComision miembrosComision)
-        {
-            if (ModelState.IsValid)
-            {
-                _context.Add(miembrosComision);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
-            }
-            ViewData["CoordinadorComisionId"] = new SelectList(_context.MiembrosComisions, "Id", "Id", miembrosComision.CoordinadorComisionId);
-            ViewData["MiembrosComisionId"] = new SelectList(_context.Usuarios, "Id", "Id", miembrosComision.MiembrosComisionId);
-            return View(miembrosComision);
-        }
-
-        // GET: MiembrosComision/Edit/5
-        public async Task<IActionResult> Edit(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
             var miembrosComision = await _context.MiembrosComisions.FindAsync(id);
+
             if (miembrosComision == null)
             {
                 return NotFound();
             }
-            ViewData["CoordinadorComisionId"] = new SelectList(_context.MiembrosComisions, "Id", "Id", miembrosComision.CoordinadorComisionId);
-            ViewData["MiembrosComisionId"] = new SelectList(_context.Usuarios, "Id", "Id", miembrosComision.MiembrosComisionId);
-            return View(miembrosComision);
+
+            return miembrosComision;
         }
 
-        // POST: MiembrosComision/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,MiembrosComisionId,CoordinadorComisionId")] MiembrosComision miembrosComision)
+        // PUT: api/MiembrosComision/5
+        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        [HttpPut("{id}")]
+        public async Task<IActionResult> PutMiembrosComision(int id, MiembrosComision miembrosComision)
         {
             if (id != miembrosComision.Id)
             {
-                return NotFound();
+                return BadRequest();
             }
 
-            if (ModelState.IsValid)
+            _context.Entry(miembrosComision).State = EntityState.Modified;
+
+            try
             {
-                try
-                {
-                    _context.Update(miembrosComision);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!MiembrosComisionExists(miembrosComision.Id))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                return RedirectToAction(nameof(Index));
+                await _context.SaveChangesAsync();
             }
-            ViewData["CoordinadorComisionId"] = new SelectList(_context.MiembrosComisions, "Id", "Id", miembrosComision.CoordinadorComisionId);
-            ViewData["MiembrosComisionId"] = new SelectList(_context.Usuarios, "Id", "Id", miembrosComision.MiembrosComisionId);
-            return View(miembrosComision);
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!MiembrosComisionExists(id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+
+            return NoContent();
         }
 
-        // GET: MiembrosComision/Delete/5
-        public async Task<IActionResult> Delete(int? id)
+        // POST: api/MiembrosComision
+        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        [HttpPost]
+        public async Task<ActionResult<MiembrosComision>> PostMiembrosComision(MiembrosComision miembrosComision)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
+            _context.MiembrosComisions.Add(miembrosComision);
+            await _context.SaveChangesAsync();
 
-            var miembrosComision = await _context.MiembrosComisions
-                .Include(m => m.CoordinadorComision)
-                .Include(m => m.MiembrosComisionNavigation)
-                .FirstOrDefaultAsync(m => m.Id == id);
+            return CreatedAtAction("GetMiembrosComision", new { id = miembrosComision.Id }, miembrosComision);
+        }
+
+        // DELETE: api/MiembrosComision/5
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteMiembrosComision(int id)
+        {
+            var miembrosComision = await _context.MiembrosComisions.FindAsync(id);
             if (miembrosComision == null)
             {
                 return NotFound();
             }
 
-            return View(miembrosComision);
-        }
-
-        // POST: MiembrosComision/Delete/5
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int id)
-        {
-            var miembrosComision = await _context.MiembrosComisions.FindAsync(id);
-            if (miembrosComision != null)
-            {
-                _context.MiembrosComisions.Remove(miembrosComision);
-            }
-
+            _context.MiembrosComisions.Remove(miembrosComision);
             await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
+
+            return NoContent();
         }
 
         private bool MiembrosComisionExists(int id)
